@@ -2,8 +2,7 @@
 📁 programs/
     ├── part_a_      ← Data preparation
     ├── part_b_      ← Analysis
-    └── part_c_      ← Strategy + Model
-     📁 fullcode←  
+    └── part_c_      ← Strategy + Model  
 📁 outputs/
     ├── charts (.png)
     └── tables (.csv)
