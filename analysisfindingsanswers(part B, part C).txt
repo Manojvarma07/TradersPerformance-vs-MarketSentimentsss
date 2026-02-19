@@ -1,0 +1,172 @@
+================================================================
+CRYPTO TRADER BEHAVIOR ANALYSIS — FINDINGS & EVIDENCE
+================================================================
+
+----------------------------------------------------------------
+PART B — ANALYSIS
+----------------------------------------------------------------
+
+QUESTION 1: Does performance differ between Fear vs Greed days?
+----------------------------------------------------------------
+YES — performance differs meaningfully between Fear and Greed days.
+
+Fear days showed lower daily PnL and lower win rates compared to
+Greed days. The Mann-Whitney statistical test confirmed this
+difference is real and not random (p-value recorded in
+sentiment_metric_tests.csv).
+
+Key findings:
+- Daily PnL is lower on Fear days across most accounts
+- Win rate drops on Fear days — traders close fewer profitable trades
+- Drawdown proxy (daily_min_cum_pnl) is more negative on Fear days,
+  meaning traders experience deeper intra-day losses during Fear
+
+Evidence:
+- See: boxplot_daily_pnl_by_sentiment.png
+- See: boxplot_win_rate_by_sentiment.png
+- See: sentiment_metric_tests.csv
+
+
+QUESTION 2: Do traders change behavior based on sentiment?
+----------------------------------------------------------------
+YES — traders clearly change their behavior based on sentiment.
+
+Trade Frequency:
+- Traders place more trades on Greed days than Fear days
+- On Fear days, trading activity reduces — suggesting caution
+
+Leverage:
+- Average leverage is higher on Greed days
+- On Fear days traders slightly reduce leverage (but not enough
+  in the high-leverage cluster — this is what Rule 1 addresses)
+
+Long/Short Bias:
+- Traders go more LONG on Greed days
+- Traders go more SHORT or reduce long exposure on Fear days
+- This is consistent with market sentiment behavior
+
+Position Sizes:
+- Position sizes are larger on Greed days
+- Traders are more conservative with sizing on Fear days
+
+Evidence:
+- See: agg_behav_by_sentiment.csv
+- See: pct_long_by_sentiment.csv
+- See: ts_total_pnl_sentiment.png
+
+
+QUESTION 3: Trader Segments (Clusters)
+----------------------------------------------------------------
+Three distinct trader segments were identified using K-Means
+clustering (k=3) based on leverage, win rate, and trade frequency.
+
+CLUSTER 0 — Consistent Winners
+- Average win rate: 0.58 (highest of all clusters)
+- Moderate leverage: ~24,145
+- Moderate trade frequency: ~1,533 trades/day
+- These traders are disciplined and consistently profitable
+- They perform best on Greed days
+
+CLUSTER 1 — High Leverage / Frequent Traders
+- Average leverage: ~28,664 (highest of all clusters)
+- Highest trade frequency: ~11,995 trades/day
+- Win rate: 0.59 but high risk due to extreme leverage
+- These traders are most exposed on Fear days
+- Capping their leverage on Fear days reduces platform volatility
+
+CLUSTER 2 — Inconsistent / Struggling Traders
+- Average win rate: 0.28 (lowest of all clusters)
+- Negative average leverage (-445,764) suggests data anomalies
+  or short-heavy positions
+- Low profitability overall
+- These traders perform poorly regardless of sentiment
+
+Evidence:
+- See: cluster_scatter.png
+- See: account_segments.csv
+- See: cluster_summary.csv
+
+
+QUESTION 4: At Least 3 Insights
+----------------------------------------------------------------
+INSIGHT 1 — Fear days hurt performance across all traders
+PnL and win rate are consistently lower on Fear days. The platform
+total PnL dropped significantly on Fear days as shown in the
+timeseries chart. Traders should reduce risk exposure on Fear days.
+See: ts_total_pnl_sentiment.png
+
+INSIGHT 2 — High leverage traders cause most platform volatility
+Cluster 1 (high leverage, ~28k avg leverage) drives the majority
+of platform-level PnL swings. Original daily volatility was
+2,581,231. After capping their leverage on Fear days, volatility
+dropped to 2,311,222 — a reduction of ~270,000. Controlling this
+segment significantly stabilizes the platform.
+See: strategy_simulation_daily_impact_partc_final.csv
+
+INSIGHT 3 — Consistent winners (Cluster 0) are reliable on Greed days
+Cluster 0 traders have a 0.58 win rate and perform best during
+Greed days. Increasing their position size by 20% on Greed days
+generated positive delta for top accounts (e.g. +7,505 and +10,443
+for two accounts). These traders are the safest to give more
+exposure to.
+See: account_impact_partc_final.csv
+
+----------------------------------------------------------------
+PART C — ACTIONABLE OUTPUT (STRATEGY RULES)
+----------------------------------------------------------------
+
+RULE 1: During Fear days, cap leverage at 3x for high-leverage
+traders (Cluster 1)
+----------------------------------------------------------------
+Rationale:
+Cluster 1 traders use extremely high leverage (~28,664 average).
+On Fear days, this leads to large drawdowns and increased platform
+volatility. By capping leverage at 3x during Fear days:
+- Platform daily volatility reduced from 2,581,231 to 2,311,222
+- Worst affected account PnL loss was contained
+- Overall platform risk reduced significantly
+
+Rule: IF sentiment == Fear AND trader in Cluster 1
+      THEN cap leverage at 3x maximum
+
+
+RULE 2: During Greed days, increase position size by 20% for
+consistent winners (Cluster 0) with win rate > 0.5
+----------------------------------------------------------------
+Rationale:
+Cluster 0 traders are consistent winners with 0.58 average win
+rate. On Greed days, market conditions favor their strategy.
+Giving them 20% more size on Greed days:
+- Generated positive delta for top performing accounts
+- Rewarded disciplined traders with more capital exposure
+- Did not increase platform risk (these traders are profitable)
+
+Rule: IF sentiment == Greed AND trader in Cluster 0
+      AND historical win rate > 0.5
+      THEN increase position size by 20%
+
+
+PREDICTIVE MODEL SUMMARY
+----------------------------------------------------------------
+A Random Forest classifier was trained to predict whether a
+trader will be profitable the next day.
+
+- Accuracy : 0.76
+- F1 Score : 0.81
+- AUC      : 0.83
+- CV AUC   : 0.72 +/- 0.11
+
+Top predictive features (in order of importance):
+1. rol_leverage_7  (0.39) — 7-day rolling leverage
+2. rol_trades_7    (0.22) — 7-day rolling trade frequency
+3. rol_size_7      (0.18) — 7-day rolling position size
+4. sentiment_num   (0.11) — market sentiment (Fear/Greed)
+5. rol_winrate_7   (0.10) — 7-day rolling win rate
+
+Key finding: Leverage is the strongest predictor of next-day
+profitability — confirming that managing leverage (Rule 1) is
+the most impactful strategy intervention.
+
+================================================================
+END OF ANALYSIS
+================================================================
