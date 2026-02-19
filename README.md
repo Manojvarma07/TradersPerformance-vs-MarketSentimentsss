@@ -164,3 +164,6 @@ THEN increase position size by 20%
 | `account_segments.csv` | Each account's cluster label |
 | `strategy_simulation_summary_partc_final.csv` | Simulation summary |
 | `model_report_partc_final.txt` | Full model evaluation report |
+
+
+other outputs in output folder
