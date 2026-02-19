@@ -1,4 +1,3 @@
-# TradersPerformance-vs-MarketSentimentsss
 
 📁 programs/
     ├── part_a_      ← Data preparation
